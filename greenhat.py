@@ -6,12 +6,48 @@ from random import randint
 from time import sleep
 import sys
 import subprocess
+import numpy as np
 
 
-def get_date_string(n: int, startdate: object) -> str:
+def build_array():
     """
-    :param n: some number of days before start date
-    :param startdate: the date on which we're starting from
+    Build an NxM array corresponding to the week and day, respectively,
+    of which the [i,j]'th index of the array is equal to the amount
+    of Github commits for that day
+
+    :return: Week x Day array containing commit counts for each position
+    """
+
+    # initialize a matrix for the year:
+    #    53 weeks (52 weeks + current week)  x  7 days
+    array = np.zeros(shape=(53, 7)).astype(int)
+    weeks, days = array.shape
+
+    # Random amount of commits per day
+    for week in range(weeks):
+        for day in range(days):
+            daily_commits = randint(1, 5)
+            array[week, day] = daily_commits
+
+    # Negate tail end of current week (if today is mid-week)
+    current_weekday = date.today().weekday()
+
+    last_week = weeks - 1
+    for day in range(days):
+        if day > current_weekday:
+            array[last_week, day] = 0
+
+    return array
+
+
+def get_date_string(array_position: tuple) -> str:
+    """
+    Take tuple corresponding to the current location of the commit_array
+    and map that to the date it represents in a format that Github
+    can understand
+
+    :param array_position: a (w,d) tuple where w corresponds to the week
+    number and d corresponds to the day of the week number
     :return: a formatted string of the date time
              format (Tue Jan 01 00:00:00 2019  -0400)
     """
@@ -20,12 +56,14 @@ def get_date_string(n: int, startdate: object) -> str:
     return rtn
 
 
-# main app
-def main(argv) -> None:
+def main(commit_array) -> None:
     """
-    :param argv: a variable argument which takes an input of number of
-    days and a start date in format 'yyyy-mm-dd', if no start date
-    is given then the start date is assumed to be today
+    Take the commit_array and post a mock file back-dated
+    to a github repository once for every commit as described for that
+    location of the array
+
+    :param commit_array: some number of days before start date
+
     :return: Github commit history should be updated
     """
 
@@ -43,15 +81,6 @@ def main(argv) -> None:
         curdate = get_date_string(i, startdate)
         num_commits = randint(1, 10)
         for commit in range(0, num_commits):
-            """
-            echo our_date > realwork.txt
-            git add realwork.txt
-            GIT_AUTHOR_DATE = our_date
-            GIT_COMMITER_DATE = our_date
-            git commit -m 'update'
-            git push
-            """
-
             subprocess.call(
                 "echo '" + curdate + str(randint(0, 1000000)) +
                 "' > realwork.txt; git add realwork.txt; GIT_AUTHOR_DATE='" +
