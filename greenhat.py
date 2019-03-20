@@ -43,6 +43,15 @@ def main(argv) -> None:
         curdate = get_date_string(i, startdate)
         num_commits = randint(1, 10)
         for commit in range(0, num_commits):
+            """
+            echo our_date > realwork.txt
+            git add realwork.txt
+            GIT_AUTHOR_DATE = our_date
+            GIT_COMMITER_DATE = our_date
+            git commit -m 'update'
+            git push
+            """
+
             subprocess.call(
                 "echo '" + curdate + str(randint(0, 1000000)) +
                 "' > realwork.txt; git add realwork.txt; GIT_AUTHOR_DATE='" +
