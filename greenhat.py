@@ -18,9 +18,9 @@ def build_array():
     :return: Week x Day array containing commit counts for each position
     """
 
-    # initialize a matrix for the year:
-    #    53 weeks (52 weeks + current week)  x  7 days
-    array = np.zeros(shape=(53, 7)).astype(int)
+    # initialize a matrix for the year
+    #   53 weeks (52 weeks + current week)  x  7 days
+    array = numpy.zeros(shape=(53, 7)).astype(int)
     weeks, days = array.shape
 
     # Random amount of commits per day
@@ -30,30 +30,67 @@ def build_array():
             array[week, day] = daily_commits
 
     # Negate tail end of current week (if today is mid-week)
+
+    # today.weekday returns 0 = monday, 6 = sunday. Github starts week on Sunday
+    #    So we have to add some catches for this
     current_weekday = date.today().weekday()
 
     last_week = weeks - 1
     for day in range(days):
-        if day > current_weekday:
-            array[last_week, day] = 0
+        if day - 1 > current_weekday:  # day-1 fixes indexing monday as start of week
+            array[last_week, day] = -1
+
+        if current_weekday == 6:  # fixes the broken case where Sunday = 6 (because it should = 0 for github)
+            array[last_week, 1:] = -1
 
     return array
 
 
-def get_date_string(array_position: tuple) -> str:
+def get_date_string(n: int, startdate: object) -> str:
     """
-    Take tuple corresponding to the current location of the commit_array
-    and map that to the date it represents in a format that Github
-    can understand
+    We'll need a function that can return the formatted datetime string
+    when given how many days from today.
 
-    :param array_position: a (w,d) tuple where w corresponds to the week
-    number and d corresponds to the day of the week number
-    :return: a formatted string of the date time
-             format (Tue Jan 01 00:00:00 2019  -0400)
+    :param n: Number of days since start date
+    :param startdate: the fatetime object of the day we want to count from
+
+    :return:
     """
     d = startdate - timedelta(days=n)
     rtn = d.strftime("%a %b %d %X %Y %z -0400")
     return rtn
+
+
+def build_commit_records(commit_array: np.array) -> list:
+    """
+    In order to be able to commit our random commits to github, we're going to
+    need to generate a list of the dates in which we need to commit (in the
+    right date-time format) and the amount of times we need to commit for that
+    date.
+
+    :param commit_array: a 53x7 numpy array of the amount of commits generated
+                            by the build_array function
+    :return: A list of lists containing the formatted datetime string and the
+                corresponding number of commits for that day.
+    """
+
+    flat_commits = [
+        day for week in commit_array for day in week  # Nested loop
+        if day != -1  # Making sure that we skip days that haven't happened yet
+    ]
+
+    # Let's generate a list of date-time formats for our flat random array
+    commit_records = []
+    for days_prior in range(
+            364, -1, -1):  # 365 days in a year, but indexed at 0 so (365-1)
+        today = date.today()
+        prior_date = get_date_string(days_prior, today)
+
+        commit_index = 364 - days_prior  # since we're itterating in reverse
+
+        commit_records.append([prior_date, flat_commits[commit_index]])
+
+    return commit_records
 
 
 def main(commit_array) -> None:
@@ -67,16 +104,6 @@ def main(commit_array) -> None:
     :return: Github commit history should be updated
     """
 
-    if len(argv) < 1 or len(argv) > 2:
-        print("Error: Bad input.")
-        sys.exit(1)
-    n = int(argv[0])
-    if len(argv) == 1:
-        startdate = date.today()
-    if len(argv) == 2:
-        startdate = date(
-            int(argv[1][0:4]), int(argv[1][5:7]), int(argv[1][8:10]))
-    i = 0
     while i <= n:
         curdate = get_date_string(i, startdate)
         num_commits = randint(1, 10)
@@ -94,4 +121,7 @@ def main(commit_array) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    array = build_array()
+    commit_record = build_commit_records(array)
+
+    print(commit_record)
