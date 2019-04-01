@@ -24,3 +24,13 @@ Enjoy your decorated calendar!
 
 ### License
 greenhat is distributed under the GNU General Public License v3.0 (GPLv3).
+
+HELPFUL:
+    Test github SSH Connection:
+        ssh -T git@github.com
+
+    Make sure directed at SSH not HTTP
+        git remote -v
+
+    Direct to SSH:
+        git remote set-url origin git@github.com:<Username>/<Project>.git

@@ -4,7 +4,6 @@
 from datetime import date, timedelta
 from random import randint
 from time import sleep
-import sys
 import subprocess
 import numpy as np
 
@@ -20,7 +19,7 @@ def build_array():
 
     # initialize a matrix for the year
     #   53 weeks (52 weeks + current week)  x  7 days
-    array = numpy.zeros(shape=(53, 7)).astype(int)
+    array = np.zeros(shape=(53, 7)).astype(int)
     weeks, days = array.shape
 
     # Random amount of commits per day
@@ -104,9 +103,10 @@ def main(commit_array) -> None:
     :return: Github commit history should be updated
     """
 
-    while i <= n:
-        curdate = get_date_string(i, startdate)
-        num_commits = randint(1, 10)
+    for commit in commit_array:
+        curdate = commit[0]
+        num_commits = commit[1]
+
         for commit in range(0, num_commits):
             subprocess.call(
                 "echo '" + curdate + str(randint(0, 1000000)) +
@@ -115,7 +115,7 @@ def main(commit_array) -> None:
                 "' git commit -m 'update'; git push;",
                 shell=True)
             sleep(.5)
-        i += 1
+
     subprocess.call(
         "git rm realwork.txt; git commit -m 'delete'; git push;", shell=True)
 
@@ -124,4 +124,4 @@ if __name__ == "__main__":
     array = build_array()
     commit_record = build_commit_records(array)
 
-    print(commit_record)
+    main(commit_record)
